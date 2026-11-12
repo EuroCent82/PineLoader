@@ -18,6 +18,7 @@ PineLoader ist kein BepInEx und kein MelonLoader. Der Aufbau dieser README folgt
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - Zielframework `net10.0-windows`
+- Die Anleitung auf der Webseite nutzt [Visual Studio 2026 Community](https://visualstudio.microsoft.com/downloads/) mit der Workload .NET-Desktopentwicklung. Visual Studio 2022 baut `net10.0-windows` nicht.
 
 ## Installation
 
@@ -30,7 +31,7 @@ PineLoader ist kein BepInEx und kein MelonLoader. Der Aufbau dieser README folgt
 
 Wenn eine Steam-Dateiprüfung die originale Shipping-Datei zurückbringt, `PineLoader.exe` einmal erneut starten. Die gesicherte `*-Win64-Game.exe` nicht löschen und nicht durch den Loader ersetzen.
 
-Die Webseite unter `web/` beschreibt denselben Ablauf unter `/docs/installation`.
+Die Webseite unter `website/` beschreibt denselben Ablauf unter `/docs/installation`.
 
 ## Ordner
 
@@ -48,15 +49,9 @@ PineLoader/
 
 ## Eine Mod bauen
 
-Das Beispiel liegt in `examples/HelloMod`.
+Die Anleitung legt die Dateien einzeln an und erklärt jede Klasse und Methode. Sie steht unter `/docs/create-mod`. `/create-mod` führt dorthin. Das Spiel im Beispiel ist Pionero Capital. Dieselbe Notiz funktioniert ohne Java, und sie kann um einen Java-Agenten ergänzt werden.
 
-```bash
-dotnet build examples/HelloMod/HelloMod.csproj -c Release
-```
-
-Die DLL gehört nach `Mods/HelloMod/HelloMod.dll`. Die Projektreferenz auf PineLoader hat `Private=false`, damit keine zweite `PineLoader.dll` in den Mod-Ordner kopiert wird.
-
-Die öffentliche Schnittstelle ist `IPineMod.Load(IPineHost)` in `IPineHost.cs`.
+Die öffentliche Schnittstelle ist `IPineMod` und `IPineHost` in `IPineHost.cs`. Jede Methode ist auf der Webseite unter `/docs/api` mit einem eigenen Beispiel beschrieben.
 
 ## Diesen Loader bauen
 
@@ -75,12 +70,12 @@ dotnet publish PineLoader.csproj -c Release -r win-x64 --self-contained true -p:
 Deutsch und Englisch, Dokumentation unter `/docs/`, Changelog unter `/changelog`.
 
 ```bash
-cd web
+cd website
 npm install
 npm run dev
 ```
 
-`npm run build` schreibt die fertige Seite nach `web/dist`.
+`npm run build` schreibt die fertige Seite nach `website/dist`.
 
 Vue 3 und Vite sind nur das Gerüst der Seite. Das Aussehen ist eigenes CSS.
 

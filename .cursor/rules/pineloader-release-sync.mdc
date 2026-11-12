@@ -8,8 +8,8 @@ alwaysApply: true
 Wenn am PineLoader etwas geändert wird (Verhalten, Fenster, API, Version, Mod-Schnittstelle), gelten alle drei Orte zusammen:
 
 1. Die laufende Quelle unter `PineLoader/`.
-2. Dieselbe Quelle unter `PineLoader-GitHub/`. `bin/`, `obj/`, `web/node_modules/` und `web/dist/` gehören nicht ins Repository.
-3. Der Changelog der Webseite in beiden Sprachen: `PineLoader-GitHub/web/src/i18n/de.js` und `PineLoader-GitHub/web/src/i18n/en.js`.
+2. Dieselbe Quelle unter `PineLoader-GitHub/`. `bin/`, `obj/`, `website/node_modules/` und `website/dist/` gehören nicht ins Repository.
+3. Der Changelog der Webseite in beiden Sprachen: `PineLoader-GitHub/website/src/i18n/de.js` und `PineLoader-GitHub/website/src/i18n/en.js`.
 
 Die Dokumentation liegt auf der Webseite unter `/docs/`. Ein geänderter Vertrag von `IPineHost` oder `IPineMod` wird dort ebenfalls aktualisiert.
 

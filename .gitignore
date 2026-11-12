@@ -6,8 +6,8 @@ obj/
 config.json
 src/GloveboxAgent/out/
 src/GloveboxAgent/*.jar
-web/node_modules/
-web/dist/
+website/node_modules/
+website/dist/
 .cursor/*
 !.cursor/rules/
 !.cursor/rules/**

@@ -16,16 +16,16 @@
   <ItemGroup>
     <Compile Remove="src\**" />
     <Compile Remove="examples\**" />
-    <Compile Remove="web\**" />
+    <Compile Remove="website\**" />
     <Content Include="brand\*.jpg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Remove="src\**" />
     <Content Remove="examples\**" />
-    <Content Remove="web\**" />
+    <Content Remove="website\**" />
     <None Remove="src\**" />
     <None Remove="examples\**" />
-    <None Remove="web\**" />
+    <None Remove="website\**" />
     <EmbeddedResource Remove="src\**" />
     <EmbeddedResource Remove="examples\**" />
-    <EmbeddedResource Remove="web\**" />
+    <EmbeddedResource Remove="website\**" />
   </ItemGroup>
 </Project>
