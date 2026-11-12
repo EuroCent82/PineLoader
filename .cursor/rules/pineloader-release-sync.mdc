@@ -1,0 +1,16 @@
+---
+description: PineLoader-Änderungen immer in Quelle, GitHub-Ordner und Webseiten-Changelog nachziehen
+alwaysApply: true
+---
+
+# PineLoader bleibt mit GitHub und der Webseite gleich
+
+Wenn am PineLoader etwas geändert wird (Verhalten, Fenster, API, Version, Mod-Schnittstelle), gelten alle drei Orte zusammen:
+
+1. Die laufende Quelle unter `PineLoader/`.
+2. Dieselbe Quelle unter `PineLoader-GitHub/`. `bin/`, `obj/`, `web/node_modules/` und `web/dist/` gehören nicht ins Repository.
+3. Der Changelog der Webseite in beiden Sprachen: `PineLoader-GitHub/web/src/i18n/de.js` und `PineLoader-GitHub/web/src/i18n/en.js`.
+
+Die Dokumentation liegt auf der Webseite unter `/docs/`. Ein geänderter Vertrag von `IPineHost` oder `IPineMod` wird dort ebenfalls aktualisiert.
+
+Nicht pushen und nicht veröffentlichen, solange der Nutzer das nicht ausdrücklich verlangt. `docs.md` und `reports/code-analysis-*.html` für dieses Projekt nicht anlegen, solange der Nutzer das nicht wieder einschaltet.

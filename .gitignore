@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+*.user
+*.class
+config.json
+src/GloveboxAgent/out/
+src/GloveboxAgent/*.jar
+web/node_modules/
+web/dist/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
