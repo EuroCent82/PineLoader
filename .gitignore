@@ -8,10 +8,12 @@ obj/
 # This machine's game path. It is written next to PineLoader.exe.
 config.json
 
-# Java agent build output
+# Java class files from any local build
 *.class
-src/GloveboxAgent/out/
-src/GloveboxAgent/*.jar
+
+# Glovebox, its agent, and the Java shim stay on this machine.
+# examples/ remains part of the repository.
+src/
 
 # Editor metadata. Not part of the PineLoader repository.
 .cursor/
