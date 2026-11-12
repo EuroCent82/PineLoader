@@ -1,13 +1,17 @@
+# Visual Studio and MSBuild
 bin/
 obj/
 .vs/
 *.user
-*.class
+*.suo
+
+# This machine's game path. It is written next to PineLoader.exe.
 config.json
+
+# Java agent build output
+*.class
 src/GloveboxAgent/out/
 src/GloveboxAgent/*.jar
-website/node_modules/
-website/dist/
-.cursor/*
-!.cursor/rules/
-!.cursor/rules/**
+
+# Editor metadata. Not part of the PineLoader repository.
+.cursor/
