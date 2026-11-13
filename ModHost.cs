@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.Win32;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Loader;
@@ -20,6 +21,8 @@ sealed class ModHost : IPineHost
     static readonly JsonSerializerOptions Json = new() { WriteIndented = true };
     GameLayout? located;
     bool locatedReady;
+    string? pendingNote;
+    List<FileSystemWatcher>? eyes;
     readonly List<ModFolderContext> loadedContexts = [];
     readonly List<string> agentOptions = [];
     readonly List<Action<Process>> gameHooks = [];
@@ -156,6 +159,7 @@ sealed class ModHost : IPineHost
 
     void Install()
     {
+        locatedReady = false;
         var loader = Path.Combine(Root, "PineLoader.exe");
         if (!File.Exists(loader))
         {
@@ -163,18 +167,36 @@ sealed class ModHost : IPineHost
             return;
         }
 
+        RememberStartup();
+        RememberLoaderBackup(loader);
+
         var layout = LocateGame();
         if (layout == null)
         {
-            Log("Kein Unreal-Engine-5.8-Spiel neben dem Loader gefunden. Die Spieldatei bleibt unverändert.");
+            Note("Kein Unreal-Engine-5.8-Spiel neben dem Loader gefunden. " + DescribeSearch());
             return;
         }
 
         var shipping = layout.Shipping;
         var game = layout.Game;
+        if (OfficialFile(shipping) && GameIsRunning(layout))
+        {
+            Note("Das Spiel läuft. Die neue Datei wird übernommen, sobald es zu ist.");
+            return;
+        }
+
+        // Steam kann durch den Hardlink schreiben. Dann ist die neue Spieldatei PineLoader.exe selbst.
+        if (File.Exists(shipping) && SameFile(shipping, loader) && !IsLoaderFile(loader))
+        {
+            RestoreOverwrittenLoader(loader, shipping, game);
+            Note("");
+            return;
+        }
+
         if (File.Exists(shipping) && SameFile(shipping, loader))
         {
             if (!File.Exists(game)) throw new FileNotFoundException("Die originale Spieldatei " + Path.GetFileName(game) + " fehlt.");
+            Note("");
             return;
         }
 
@@ -185,9 +207,20 @@ sealed class ModHost : IPineHost
         }
         else if (File.Exists(shipping))
         {
+            if (!FileSettled(shipping))
+            {
+                Note("Die neue Spieldatei wird noch geschrieben.");
+                return;
+            }
+            if (!IsUnreal58(shipping))
+            {
+                Note("Die Shipping-Datei ist kein Unreal-Engine-5.8-Spiel und bleibt liegen.");
+                return;
+            }
+            var size = new FileInfo(shipping).Length;
             File.Move(shipping, game, overwrite: true);
             replacedOfficial = true;
-            Log("Originalspiel gesichert: " + Path.GetFileName(game));
+            Log("Neue Spieldatei gesichert: " + Path.GetFileName(game) + " (" + size + " Bytes).");
         }
 
         if (!File.Exists(game)) throw new FileNotFoundException("Die originale Spieldatei wurde nicht gefunden.");
@@ -197,8 +230,221 @@ sealed class ModHost : IPineHost
             if (replacedOfficial && File.Exists(game) && !File.Exists(shipping)) File.Move(game, shipping, overwrite: true);
             throw new IOException("PineLoader konnte nicht vor das Spiel gelegt werden (" + code + ").");
         }
+        Note("");
         Log("Spielstart öffnet zuerst PineLoader, ohne Steam-Startoptionen.");
     }
+
+    public static int Watch(string root)
+    {
+        using var gate = new Mutex(true, WatchMutex(root), out var created);
+        if (!created) return 0;
+        var host = new ModHost(root);
+        host.TryInstall();
+        using var debounce = new System.Threading.Timer(_ => host.TryInstall(), null, Timeout.Infinite, Timeout.Infinite);
+        host.eyes = [];
+        foreach (var directory in host.Win64Folders().Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            var watcher = new FileSystemWatcher(directory, "*.exe")
+            {
+                NotifyFilter = NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.LastWrite,
+                EnableRaisingEvents = true
+            };
+            FileSystemEventHandler poke = (_, _) => debounce.Change(2000, Timeout.Infinite);
+            watcher.Created += poke;
+            watcher.Changed += poke;
+            watcher.Renamed += (_, _) => debounce.Change(2000, Timeout.Infinite);
+            host.eyes.Add(watcher);
+        }
+        using var pulse = new System.Threading.Timer(_ => host.TryInstall(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
+        new ManualResetEvent(false).WaitOne();
+        return 0;
+    }
+
+    public static void EnsureWatching(string root)
+    {
+        try
+        {
+            using var existing = Mutex.OpenExisting(WatchMutex(root));
+            return;
+        }
+        catch (WaitHandleCannotBeOpenedException)
+        {
+            // Noch kein Wächter.
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        var exe = Path.Combine(root, "PineLoader.exe");
+        if (!File.Exists(exe)) return;
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = exe,
+            ArgumentList = { "--watch" },
+            WorkingDirectory = root,
+            UseShellExecute = false,
+            CreateNoWindow = true
+        });
+    }
+
+    void TryInstall()
+    {
+        using var gate = new Mutex(false, InstallMutex(Root));
+        var owned = false;
+        try
+        {
+            try
+            {
+                owned = gate.WaitOne(0);
+            }
+            catch (AbandonedMutexException)
+            {
+                owned = true;
+            }
+            if (!owned) return;
+            Install();
+        }
+        catch (Exception error)
+        {
+            Log("Die Spielzuordnung bleibt: " + error.Message);
+            Error(error.ToString());
+        }
+        finally
+        {
+            if (owned) gate.ReleaseMutex();
+        }
+    }
+
+    string DescribeSearch()
+    {
+        var notes = new List<string> { "Wurzel " + Root };
+        var configPath = Path.Combine(Root, "config.json");
+        notes.Add(File.Exists(configPath) ? "config da" : "config fehlt");
+        foreach (var win64 in Win64Folders())
+        {
+            notes.Add(win64);
+            try
+            {
+                foreach (var file in Directory.EnumerateFiles(win64, "*.exe"))
+                {
+                    var name = Path.GetFileName(file);
+                    if (!name.EndsWith(ShippingSuffix, StringComparison.OrdinalIgnoreCase) && !name.EndsWith(GameSuffix, StringComparison.OrdinalIgnoreCase)) continue;
+                    notes.Add(name + " loader=" + IsLoaderFile(file) + " ue=" + IsUnreal58(file));
+                }
+            }
+            catch (Exception error)
+            {
+                notes.Add(error.Message);
+            }
+        }
+        return string.Join("; ", notes);
+    }
+
+    static bool OfficialFile(string path) => File.Exists(path) && !IsLoaderFile(path);
+
+    bool GameIsRunning(GameLayout layout)
+    {
+        if (MatchesGame(layout, layout.Shipping)) return true;
+        return !string.Equals(Path.GetFileName(layout.Shipping), Path.GetFileName(layout.Game), StringComparison.OrdinalIgnoreCase)
+            && MatchesGame(layout, layout.Game);
+    }
+
+    static bool MatchesGame(GameLayout layout, string expected)
+    {
+        var name = Path.GetFileNameWithoutExtension(expected);
+        if (string.IsNullOrWhiteSpace(name)) return false;
+        foreach (var process in Process.GetProcessesByName(name))
+        {
+            using (process)
+            {
+                try
+                {
+                    var path = process.MainModule?.FileName;
+                    if (string.IsNullOrWhiteSpace(path) || IsLoaderFile(path)) continue;
+                    var full = Path.GetFullPath(path);
+                    if (full.Equals(Path.GetFullPath(layout.Shipping), StringComparison.OrdinalIgnoreCase)) return true;
+                    if (full.Equals(Path.GetFullPath(layout.Game), StringComparison.OrdinalIgnoreCase)) return true;
+                }
+                catch
+                {
+                    // Auf fremde Prozesse ohne Modulzugriff wird nicht gewartet.
+                }
+            }
+        }
+        return false;
+    }
+
+    static bool FileSettled(string path)
+    {
+        var first = new FileInfo(path).Length;
+        if (first <= 0) return false;
+        Thread.Sleep(800);
+        return File.Exists(path) && new FileInfo(path).Length == first;
+    }
+
+    void RememberLoaderBackup(string loader)
+    {
+        if (!IsLoaderFile(loader)) return;
+        var backup = LoaderBackup();
+        Directory.CreateDirectory(Path.GetDirectoryName(backup)!);
+        if (File.Exists(backup) && new FileInfo(backup).Length == new FileInfo(loader).Length && IsLoaderFile(backup)) return;
+        File.Copy(loader, backup, true);
+    }
+
+    void RestoreOverwrittenLoader(string loader, string shipping, string game)
+    {
+        var backup = LoaderBackup();
+        if (!File.Exists(backup) || !IsLoaderFile(backup))
+            throw new IOException("Steam hat PineLoader überschrieben, und Cache\\PineLoader.backup.exe fehlt.");
+        var size = new FileInfo(loader).Length;
+        File.Copy(loader, game, true);
+        File.Copy(backup, loader, true);
+        if (!SameFile(shipping, loader))
+        {
+            if (File.Exists(shipping)) File.Delete(shipping);
+            if (!CreateHardLink(shipping, loader, IntPtr.Zero))
+            {
+                var code = Marshal.GetLastWin32Error();
+                throw new IOException("PineLoader konnte nicht vor das Spiel gelegt werden (" + code + ").");
+            }
+        }
+        Log("Neue Spieldatei gesichert: " + Path.GetFileName(game) + " (" + size + " Bytes).");
+        Log("Spielstart öffnet zuerst PineLoader, ohne Steam-Startoptionen.");
+    }
+
+    string LoaderBackup() => Path.Combine(Root, "Cache", "PineLoader.backup.exe");
+
+    void RememberStartup()
+    {
+        try
+        {
+            var loader = Path.Combine(Root, "PineLoader.exe");
+            if (!File.Exists(loader)) return;
+            var command = "\"" + loader + "\" --watch";
+            using var key = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            if (key == null) return;
+            var current = key.GetValue("PineLoader") as string;
+            if (string.Equals(current, command, StringComparison.Ordinal)) return;
+            key.SetValue("PineLoader", command);
+            Log("PineLoader achtet ab der Anmeldung auf eine neue Spieldatei.");
+        }
+        catch (Exception error)
+        {
+            Log("Der Automatikstart konnte nicht eingetragen werden: " + error.Message);
+        }
+    }
+
+    void Note(string message)
+    {
+        if (pendingNote == message) return;
+        pendingNote = message;
+        if (message.Length > 0) Log(message);
+    }
+
+    public static string WatchMutex(string root) => InstanceMutex(root) + ".Watch";
+
+    static string InstallMutex(string root) => InstanceMutex(root) + ".Install";
 
     LoadedMod? LoadMod(string directory)
     {
@@ -470,7 +716,7 @@ sealed class ModHost : IPineHost
 
     IEnumerable<string> Win64Folders()
     {
-        var parent = Directory.GetParent(Root)?.FullName;
+        var parent = Directory.GetParent(TrimSlash(Root))?.FullName;
         var starts = new[] { Root, parent }.Where(path => !string.IsNullOrWhiteSpace(path)).Distinct(StringComparer.OrdinalIgnoreCase);
         foreach (var start in starts)
         {
@@ -532,13 +778,15 @@ sealed class ModHost : IPineHost
         {
             for (var dir = new DirectoryInfo(start!); dir != null; dir = dir.Parent)
             {
-                if (File.Exists(Path.Combine(dir.FullName, "brand", "logo.jpg"))) return dir.FullName;
+                if (File.Exists(Path.Combine(dir.FullName, "brand", "logo.jpg"))) return TrimSlash(dir.FullName);
                 var nested = Path.Combine(dir.FullName, "PineLoader");
-                if (File.Exists(Path.Combine(nested, "brand", "logo.jpg"))) return nested;
+                if (File.Exists(Path.Combine(nested, "brand", "logo.jpg"))) return TrimSlash(nested);
             }
         }
-        return AppContext.BaseDirectory;
+        return TrimSlash(AppContext.BaseDirectory);
     }
+
+    static string TrimSlash(string path) => Path.TrimEndingDirectorySeparator(Path.GetFullPath(path));
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     static extern bool CreateHardLink(string fileName, string existingFileName, IntPtr securityAttributes);

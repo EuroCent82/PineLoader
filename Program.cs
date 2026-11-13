@@ -5,11 +5,15 @@ static class Program
     [STAThread]
     static int Main(string[] args)
     {
+        if (args.Any(arg => arg.Equals("--watch", StringComparison.OrdinalIgnoreCase)))
+            return ModHost.Watch(ModHost.FindRoot());
+
         using var gate = new Mutex(true, ModHost.InstanceMutex(ModHost.FindRoot()), out var created);
         if (!created) return 0;
+        ModHost.EnsureWatching(ModHost.FindRoot());
 
         var dryRun = args.Any(arg => arg == "--dry-run");
-        var forwarded = args.Where(arg => arg != "--dry-run").ToArray();
+        var forwarded = args.Where(arg => arg != "--dry-run" && !arg.Equals("--watch", StringComparison.OrdinalIgnoreCase)).ToArray();
         ApplicationConfiguration.Initialize();
         var window = new MainForm(LaunchedDirectly() && !dryRun);
         var exit = 0;

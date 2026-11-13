@@ -30,7 +30,7 @@
   <img alt="Platform Windows" src="https://img.shields.io/badge/platform-Windows-245C48?style=flat-square">
 </p>
 
-PineLoader is not BepInEx and it is not MelonLoader. A game that is already set up keeps the same `*-Win64-Game.exe`. Pionero Capital is the example game in this guide. The same steps apply to any other Windows game whose shipping file carries `++UE5+Release-5.8`.
+PineLoader is not BepInEx and it is not MelonLoader. The game file stays named `*-Win64-Game.exe`. When Steam puts a new official build on the Shipping name, PineLoader saves that build there and puts itself back in front. Pionero Capital is the example game in this guide. The same steps apply to any other Windows game whose shipping file carries `++UE5+Release-5.8`.
 
 ## Install
 
@@ -38,12 +38,12 @@ You need Windows 10 or newer, and a Windows game whose shipping file version con
 
 1. Put the `PineLoader` folder next to the game. `PineLoader.exe` sits in that folder.
 2. Close the game, then start `PineLoader.exe` once.
-3. The loader looks beside itself for a `*-Win64-Shipping.exe` built with Unreal Engine 5.8. It keeps the original file as `*-Win64-Game.exe` and points the shipping name at `PineLoader.exe` with a hard link. For Pionero Capital those names stay `PioneroCapital-Win64-Shipping.exe` and `PioneroCapital-Win64-Game.exe`. If `config.json` already names that game file, that file stays the game.
+3. The loader looks beside itself for a `*-Win64-Shipping.exe` built with Unreal Engine 5.8. It keeps the original file as `*-Win64-Game.exe` and points the shipping name at `PineLoader.exe` with a hard link. For Pionero Capital those names stay `PioneroCapital-Win64-Shipping.exe` and `PioneroCapital-Win64-Game.exe`.
 4. Leave the Steam launch options empty.
 5. **Play** in Steam starts PineLoader first. The window hides, the game starts, and the loader stays until the game exits.
 6. Starting `PineLoader.exe` yourself leaves the window open. **Start game** then does the same thing Steam does.
 
-If Steam verifies the files and restores the original shipping file, start `PineLoader.exe` once more while the game is closed. Do not delete the saved `*-Win64-Game.exe`, and do not replace it with the loader.
+If a Steam update or a file check puts a real game executable back on the Shipping name, PineLoader saves that build as `*-Win64-Game.exe` and creates the hard link again. This runs at Windows sign-in and whenever that file changes. It waits while the game is running. The exe does not have to be found or swapped by hand. Do not delete the saved `*-Win64-Game.exe`, and do not replace the Shipping file with a copy of the loader when it is already the hard link.
 
 The ready window shows how many mod folders were found, how many loaded, and how many did not. The two log buttons open `Logs/pineloader.txt` and `Logs/err.txt`. Close or Escape does not start the game.
 
@@ -326,6 +326,13 @@ host.UseJavaAgent(jarPath, logPath);
 No attributes on the class, no `OnUpdate` method, and no access to Unreal objects. The loader does not patch game methods, and it does not load BepInEx plugins or MelonLoader mods. Anything that has to happen inside the game is built in the mod.
 
 ## Changelog
+
+### 1.0.1
+
+2026-11-13
+
+- After a Steam update or a file check, PineLoader puts itself back in front of the game. The new Shipping file is saved as `*-Win64-Game.exe` on its own. The exe does not have to be found or swapped by hand.
+- The check starts at Windows sign-in and watches the game folder. If the game is running, PineLoader waits until it exits.
 
 ### 1.0.0
 
