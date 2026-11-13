@@ -46,7 +46,7 @@ You need Windows 10 or newer, and a Windows game whose shipping file version con
 5. **Play** in Steam starts PineLoader first. The window hides, the game starts, and the loader stays until the game exits.
 6. Starting `PineLoader.exe` yourself leaves the window open. **Start game** then does the same thing Steam does.
 
-If a Steam update or a file check puts a real game executable back on the Shipping name, PineLoader saves that build as `*-Win64-Game.exe` and creates the hard link again. This runs at Windows sign-in and whenever that file changes. It waits while the game is running. The exe does not have to be found or swapped by hand. Do not delete the saved `*-Win64-Game.exe`, and do not replace the Shipping file with a copy of the loader when it is already the hard link.
+If a Steam update or a file check puts a real game executable back on the Shipping name, PineLoader saves that build as `*-Win64-Game.exe` and creates the hard link again. While that process is still running, the file stays where it is. A quiet PineLoader process checks again later, including after the next Windows sign-in, and when that file changes. The exe does not have to be found or swapped by hand. Do not delete the saved `*-Win64-Game.exe`, and do not replace the Shipping file with a copy of the loader when it is already the hard link.
 
 The ready window shows how many mod folders were found, how many loaded, and how many did not. The two log buttons open `Logs/pineloader.txt` and `Logs/err.txt`. Close or Escape does not start the game.
 
@@ -335,7 +335,7 @@ No attributes on the class, no `OnUpdate` method, and no access to Unreal object
 2026-11-13
 
 - After a Steam update or a file check, PineLoader puts itself back in front of the game. The new Shipping file is saved as `*-Win64-Game.exe` on its own. The exe does not have to be found or swapped by hand.
-- The check starts at Windows sign-in and watches the game folder. If the game is running, PineLoader waits until it exits.
+- A real game file on the Shipping name is not moved while that process is running. A quiet PineLoader process checks again later, including after the next Windows sign-in.
 
 ### 1.0.0
 
