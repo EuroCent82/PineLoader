@@ -359,7 +359,7 @@ The single file that sits next to the game is produced with:
 dotnet publish PineLoader.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none
 ```
 
-The site is published separately, in German and English, at PineLoader.dev or PineLoader.de. The same guide is there under `/docs/`, and the changelog under `/changelog`.
+The site is published separately, in German and English, at PineLoader.dev. The same guide is there under `/docs/`, and the changelog under `/changelog`.
 
 ## License
 
