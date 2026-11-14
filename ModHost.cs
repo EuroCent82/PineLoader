@@ -87,9 +87,11 @@ sealed class ModHost : IPineHost
 
     public void PrepareGame(ProcessStartInfo start)
     {
-        if (agentOptions.Count == 0) return;
+        DropStaleAgentStock();
+        var live = agentOptions.Where(AgentJarExists).ToList();
+        if (live.Count == 0) return;
         start.Environment.TryGetValue("JAVA_TOOL_OPTIONS", out var existing);
-        var addition = string.Join(' ', agentOptions);
+        var addition = string.Join(' ', live);
         start.Environment["JAVA_TOOL_OPTIONS"] = string.IsNullOrWhiteSpace(existing) ? addition : existing + " " + addition;
     }
 
@@ -504,37 +506,67 @@ sealed class ModHost : IPineHost
         }
 
         var missingJars = new List<string>();
-        var staleLine = false;
+        var kept = new List<string>();
+        var dropped = false;
         foreach (var raw in File.ReadAllLines(agentPath))
         {
             var line = raw.Trim();
             if (line.Length == 0) continue;
-            if (!line.StartsWith("-javaagent:", StringComparison.Ordinal))
+            if (AgentJarExists(line) && !LineForMissingMod(line, missingMods))
             {
-                staleLine = true;
+                kept.Add(line);
                 continue;
             }
 
-            var payload = line.Substring("-javaagent:".Length);
-            var splitAt = payload.IndexOf('=');
-            var jar = splitAt >= 0 ? payload.Substring(0, splitAt) : payload;
-            if (File.Exists(jar)) continue;
-            staleLine = true;
+            dropped = true;
+            if (!TryAgentJar(line, out var jar)) continue;
             var name = Path.GetFileName(jar);
             if (string.IsNullOrWhiteSpace(name)) continue;
             if (missingJars.Exists(known => known.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
             missingJars.Add(name);
         }
 
-        if (missingMods.Count == 0 && !staleLine) return;
+        if (!dropped) return;
 
-        File.Delete(agentPath);
+        if (kept.Count == 0) File.Delete(agentPath);
+        else File.WriteAllText(agentPath, string.Join(Environment.NewLine, kept) + Environment.NewLine);
         var reasons = new List<string>();
         if (missingMods.Count > 0) reasons.Add("weil diese Mods fehlen: " + string.Join(", ", missingMods));
         if (missingJars.Count == 1) reasons.Add("weil diese Datei fehlt: " + missingJars[0]);
         else if (missingJars.Count > 1) reasons.Add("weil diese Dateien fehlen: " + string.Join(", ", missingJars));
         var detail = reasons.Count > 0 ? string.Join(", und ", reasons) : "weil eine Zeile kein Java-Agent ist";
         Log("Altbestand verworfen, " + detail + ".");
+    }
+
+    static bool LineForMissingMod(string line, List<string> missingMods)
+    {
+        foreach (var id in missingMods)
+        {
+            if (line.Contains("/Mods/" + id + "/", StringComparison.OrdinalIgnoreCase)) return true;
+            if (line.Contains("\\Mods\\" + id + "\\", StringComparison.OrdinalIgnoreCase)) return true;
+        }
+        return false;
+    }
+
+    static bool AgentJarExists(string line) => TryAgentJar(line, out var jar) && File.Exists(jar);
+
+    static bool TryAgentJar(string line, out string jar)
+    {
+        jar = "";
+        var payload = line.Trim();
+        const string prefix = "-javaagent:";
+        if (!payload.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return false;
+        payload = payload.Substring(prefix.Length).Trim();
+        if (payload.StartsWith('"'))
+        {
+            var end = payload.IndexOf('"', 1);
+            if (end <= 1) return false;
+            jar = payload.Substring(1, end - 1);
+            return jar.Length > 0;
+        }
+        var split = payload.IndexOf('=');
+        jar = split >= 0 ? payload.Substring(0, split) : payload;
+        return jar.Length > 0;
     }
 
     void EnsureConfigs()
