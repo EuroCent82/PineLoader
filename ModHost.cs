@@ -50,6 +50,7 @@ sealed class ModHost : IPineHost
         Install();
         GameExe = ResolveGame();
         EnsureConfigs();
+        DropStaleAgentStock();
 
         var cachePath = Path.Combine(Root, "Cache", "state.json");
         var fingerprint = Fingerprint();
@@ -467,6 +468,73 @@ sealed class ModHost : IPineHost
             context.Unload();
             throw;
         }
+    }
+
+    void DropStaleAgentStock()
+    {
+        var agentPath = Path.Combine(Root, "Cache", "java-agent.arg");
+        if (!File.Exists(agentPath)) return;
+
+        var missingMods = new List<string>();
+        var statePath = Path.Combine(Root, "Cache", "state.json");
+        string[]? loaded = null;
+        if (File.Exists(statePath))
+        {
+            try
+            {
+                loaded = JsonSerializer.Deserialize<CacheFile>(File.ReadAllText(statePath))?.Loaded;
+            }
+            catch
+            {
+                loaded = null;
+            }
+        }
+
+        if (loaded != null)
+        {
+            foreach (var entry in loaded)
+            {
+                if (string.IsNullOrEmpty(entry)) continue;
+                var id = entry.Split('|', 2)[0].Trim();
+                if (id.Length == 0) continue;
+                if (missingMods.Exists(known => known.Equals(id, StringComparison.OrdinalIgnoreCase))) continue;
+                if (Directory.Exists(Path.Combine(Root, "Mods", id))) continue;
+                missingMods.Add(id);
+            }
+        }
+
+        var missingJars = new List<string>();
+        var staleLine = false;
+        foreach (var raw in File.ReadAllLines(agentPath))
+        {
+            var line = raw.Trim();
+            if (line.Length == 0) continue;
+            if (!line.StartsWith("-javaagent:", StringComparison.Ordinal))
+            {
+                staleLine = true;
+                continue;
+            }
+
+            var payload = line.Substring("-javaagent:".Length);
+            var splitAt = payload.IndexOf('=');
+            var jar = splitAt >= 0 ? payload.Substring(0, splitAt) : payload;
+            if (File.Exists(jar)) continue;
+            staleLine = true;
+            var name = Path.GetFileName(jar);
+            if (string.IsNullOrWhiteSpace(name)) continue;
+            if (missingJars.Exists(known => known.Equals(name, StringComparison.OrdinalIgnoreCase))) continue;
+            missingJars.Add(name);
+        }
+
+        if (missingMods.Count == 0 && !staleLine) return;
+
+        File.Delete(agentPath);
+        var reasons = new List<string>();
+        if (missingMods.Count > 0) reasons.Add("weil diese Mods fehlen: " + string.Join(", ", missingMods));
+        if (missingJars.Count == 1) reasons.Add("weil diese Datei fehlt: " + missingJars[0]);
+        else if (missingJars.Count > 1) reasons.Add("weil diese Dateien fehlen: " + string.Join(", ", missingJars));
+        var detail = reasons.Count > 0 ? string.Join(", und ", reasons) : "weil eine Zeile kein Java-Agent ist";
+        Log("Altbestand verworfen, " + detail + ".");
     }
 
     void EnsureConfigs()

@@ -330,6 +330,12 @@ No attributes on the class, no `OnUpdate` method, and no access to Unreal object
 
 ## Changelog
 
+### 1.0.2
+
+2026-11-14
+
+- When a mod was deleted, PineLoader drops the old Java agent list and writes it again from the mods that are still there. A deleted mod can no longer stop the local server at startup.
+
 ### 1.0.1
 
 2026-11-13
