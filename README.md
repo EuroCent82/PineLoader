@@ -46,7 +46,7 @@ You need Windows 10 or newer, and a Windows game whose shipping file version con
 5. **Play** in Steam starts PineLoader first. The window hides, the game starts, and the loader stays until the game exits.
 6. Starting `PineLoader.exe` yourself leaves the window open. **Start game** then does the same thing Steam does.
 
-If a Steam update or a file check puts a real game executable back on the Shipping name, PineLoader saves that build as `*-Win64-Game.exe` and creates the hard link again. While that process is still running, the file stays where it is. A quiet PineLoader process checks again later, including after the next Windows sign-in, and when that file changes. The exe does not have to be found or swapped by hand. Do not delete the saved `*-Win64-Game.exe`, and do not replace the Shipping file with a copy of the loader when it is already the hard link.
+If a Steam update or a file check puts a real game executable back on the Shipping name, PineLoader saves that build as `*-Win64-Game.exe` and creates the hard link again. While that process is still running, the file stays where it is. PineLoader exits when the game exits. The next start puts the link back. Do not delete the saved `*-Win64-Game.exe`, and do not replace the Shipping file with a copy of the loader when it is already the hard link.
 
 The ready window shows how many mod folders were found, how many loaded, and how many did not. The two log buttons open `Logs/pineloader.txt` and `Logs/err.txt`. Close or Escape does not start the game.
 
@@ -57,12 +57,15 @@ Everything the loader creates sits next to `PineLoader.exe`.
 ```text
 PineLoader/
   PineLoader.exe
+  shim/PineJava.exe
   Mods/<Name>/<Name>.dll
   Config/<Name>.ini
   Cache/
   Logs/pineloader.txt
   Logs/err.txt
 ```
+
+`shim/PineJava.exe` comes with the PineLoader download. A mod that talks to the game server, such as Glovebox, copies that file in front of the server. Without it the mod is skipped and the log says the Java forwarder is missing.
 
 Each subfolder of `Mods` is one mod. The folder name is the mod name, and the DLL uses that same name, for example `Mods/ErsteMod/ErsteMod.dll`. A folder whose name starts with a dot is ignored. A broken DLL is skipped and written to `err.txt`. The game still starts.
 
@@ -330,6 +333,13 @@ No attributes on the class, no `OnUpdate` method, and no access to Unreal object
 
 ## Changelog
 
+### 1.0.3
+
+2026-11-15
+
+- The release zip includes `shim/PineJava.exe` next to `PineLoader.exe`. Without that file, a mod that talks to the game server is skipped.
+- PineLoader exits when the game exits. The quiet process no longer stays behind after the game has closed.
+
 ### 1.0.2
 
 2026-11-14
@@ -363,11 +373,13 @@ The published `PineLoader.exe` already contains the runtime. Building the loader
 dotnet build PineLoader.csproj -c Release
 ```
 
-The single file that sits next to the game is produced with:
+The files that sit next to the game are produced with:
 
 ```bash
 dotnet publish PineLoader.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none
 ```
+
+The publish folder then contains `PineLoader.exe` and `shim/PineJava.exe`. The release zip keeps both. `PineJava.exe` is built from `src/JavaShim` when that project is present.
 
 The site is published separately, in German and English, at PineLoader.dev. The same guide is there under `/docs/`, and the changelog under `/changelog`.
 

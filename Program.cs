@@ -5,8 +5,8 @@ static class Program
     [STAThread]
     static int Main(string[] args)
     {
-        if (args.Any(arg => arg.Equals("--watch", StringComparison.OrdinalIgnoreCase)))
-            return ModHost.Watch(ModHost.FindRoot());
+        if (Watching(args, out var parentId))
+            return ModHost.Watch(ModHost.FindRoot(), parentId);
 
         using var gate = new Mutex(true, ModHost.InstanceMutex(ModHost.FindRoot()), out var created);
         if (!created) return 0;
@@ -97,6 +97,18 @@ static class Program
         var mods = Path.Combine(root, "Mods");
         if (!Directory.Exists(mods)) return 0;
         return Directory.GetDirectories(mods).Count(dir => !Path.GetFileName(dir).StartsWith('.'));
+    }
+
+    static bool Watching(string[] args, out int parentId)
+    {
+        parentId = 0;
+        for (var index = 0; index < args.Length; index++)
+        {
+            if (!args[index].Equals("--watch", StringComparison.OrdinalIgnoreCase)) continue;
+            if (index + 1 < args.Length && int.TryParse(args[index + 1], out var id)) parentId = id;
+            return true;
+        }
+        return false;
     }
 
     static bool LaunchedDirectly()

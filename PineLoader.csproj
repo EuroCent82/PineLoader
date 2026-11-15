@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>PineLoader</AssemblyName>
     <Product>PineLoader</Product>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <RootNamespace>PineLoader</RootNamespace>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationTitle>PineLoader</ApplicationTitle>
@@ -28,4 +28,8 @@
     <EmbeddedResource Remove="examples\**" />
     <EmbeddedResource Remove="website\**" />
   </ItemGroup>
+  <Target Name="PublishJavaShim" AfterTargets="Publish" Condition="Exists('$(MSBuildThisFileDirectory)src\JavaShim\JavaShim.csproj')">
+    <MSBuild Projects="$(MSBuildThisFileDirectory)src\JavaShim\JavaShim.csproj" Targets="Restore;Publish" Properties="Configuration=$(Configuration)" />
+    <Copy SourceFiles="$(MSBuildThisFileDirectory)src\JavaShim\bin\$(Configuration)\net10.0\win-x64\publish\PineJava.exe" DestinationFiles="$(PublishDir)shim\PineJava.exe" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

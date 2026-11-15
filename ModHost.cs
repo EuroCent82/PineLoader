@@ -237,10 +237,20 @@ sealed class ModHost : IPineHost
         Log("Spielstart öffnet zuerst PineLoader, ohne Steam-Startoptionen.");
     }
 
-    public static int Watch(string root)
+    public static int Watch(string root, int parentId)
     {
         using var gate = new Mutex(true, WatchMutex(root), out var created);
-        if (!created) return 0;
+        if (!created || parentId <= 0) return 0;
+        Process parent;
+        try
+        {
+            parent = Process.GetProcessById(parentId);
+        }
+        catch (ArgumentException)
+        {
+            return 0;
+        }
+        if (parent.HasExited) return 0;
         var host = new ModHost(root);
         host.TryInstall();
         using var debounce = new System.Threading.Timer(_ => host.TryInstall(), null, Timeout.Infinite, Timeout.Infinite);
@@ -259,7 +269,8 @@ sealed class ModHost : IPineHost
             host.eyes.Add(watcher);
         }
         using var pulse = new System.Threading.Timer(_ => host.TryInstall(), null, TimeSpan.FromSeconds(20), TimeSpan.FromSeconds(20));
-        new ManualResetEvent(false).WaitOne();
+        parent.WaitForExit();
+        host.TryInstall();
         return 0;
     }
 
@@ -284,7 +295,7 @@ sealed class ModHost : IPineHost
         Process.Start(new ProcessStartInfo
         {
             FileName = exe,
-            ArgumentList = { "--watch" },
+            ArgumentList = { "--watch", Environment.ProcessId.ToString() },
             WorkingDirectory = root,
             UseShellExecute = false,
             CreateNoWindow = true
