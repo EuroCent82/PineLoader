@@ -1,4 +1,5 @@
 [b]PineLoader 1.0.4[/b]
+## Deutsch
 Das Log nennt [b]Pionero Capital[/b] als unterstütztes Spiel dieser Fassung.
 [code]Load[/code] gibt geladen, aus oder fehlgeschlagen zurück.
 Während [code]Load[/code] liest [code]Setting[/code] die INI dieser Mod.
@@ -9,6 +10,7 @@ Nach 15 Sekunden ändert ein später Aufruf dieses Ladens den Loader nicht mehr.
 Die Datei ist [code]PineLoader-1.0.4-win-x64.zip[/code].
 Darin liegen [code]PineLoader.exe[/code] und [code]shim\PineJava.exe[/code].
 [code]PineJava[/code] liest nur [code]Cache\java-agent.arg[/code] und kennt keine Mod-Namen.
+## English
 The log names [b]Pionero Capital[/b] as the supported game of this copy.
 [code]Load[/code] returns loaded, off, or failed.
 During [code]Load[/code], [code]Setting[/code] reads that mod's ini.
@@ -21,12 +23,14 @@ It contains [code]PineLoader.exe[/code] and [code]shim\PineJava.exe[/code].
 [code]PineJava[/code] reads only [code]Cache\java-agent.arg[/code] and does not know mod names.
 
 [b]1.0.3[/b]
+## Deutsch
 Das Zip enthält [code]shim\PineJava.exe[/code] neben [code]PineLoader.exe[/code].
 [b]PineLoader[/b] endet mit dem Spiel.
 Der Automatikstart nach der Anmeldung ist aus, bis er eingeschaltet wird.
 Eine DLL ohne Mod-Klasse ist ein Fehler.
 Ein Schnellstart lädt die Mods weiter. Der Bericht ist der gerade geladene Stand.
 [b]Spiel wiederherstellen[/b] legt die originale Spieldatei auf den Shipping-Namen zurück.
+## English
 The zip includes [code]shim\PineJava.exe[/code] next to [code]PineLoader.exe[/code].
 [b]PineLoader[/b] exits when the game exits.
 Sign-in autostart is off until it is switched on.
