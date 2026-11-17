@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>PineLoader</AssemblyName>
     <Product>PineLoader</Product>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <RootNamespace>PineLoader</RootNamespace>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationTitle>PineLoader</ApplicationTitle>
@@ -17,19 +17,31 @@
     <Compile Remove="src\**" />
     <Compile Remove="examples\**" />
     <Compile Remove="website\**" />
+    <Compile Remove="PineLoader.Tests\**" />
     <Content Include="brand\*.jpg" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
     <Content Remove="src\**" />
     <Content Remove="examples\**" />
     <Content Remove="website\**" />
+    <Content Remove="PineLoader.Tests\**" />
     <None Remove="src\**" />
     <None Remove="examples\**" />
     <None Remove="website\**" />
+    <None Remove="PineLoader.Tests\**" />
     <EmbeddedResource Remove="src\**" />
     <EmbeddedResource Remove="examples\**" />
     <EmbeddedResource Remove="website\**" />
+    <EmbeddedResource Remove="PineLoader.Tests\**" />
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>PineLoader.Tests</_Parameter1>
+    </AssemblyAttribute>
   </ItemGroup>
   <Target Name="PublishJavaShim" AfterTargets="Publish" Condition="Exists('$(MSBuildThisFileDirectory)src\JavaShim\JavaShim.csproj')">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)src\JavaShim\JavaShim.csproj" Targets="Restore;Publish" Properties="Configuration=$(Configuration)" />
-    <Copy SourceFiles="$(MSBuildThisFileDirectory)src\JavaShim\bin\$(Configuration)\net10.0\win-x64\publish\PineJava.exe" DestinationFiles="$(PublishDir)shim\PineJava.exe" SkipUnchangedFiles="true" />
+    <PropertyGroup>
+      <_JavaShimPublish>$(MSBuildThisFileDirectory)src\JavaShim\bin\$(Configuration)\net10.0\win-x64\publish\</_JavaShimPublish>
+    </PropertyGroup>
+    <MSBuild Projects="$(MSBuildThisFileDirectory)src\JavaShim\JavaShim.csproj" Targets="Restore;Publish" Properties="Configuration=$(Configuration);PublishDir=$(_JavaShimPublish)" />
+    <Copy SourceFiles="$(_JavaShimPublish)PineJava.exe" DestinationFiles="$(PublishDir)shim\PineJava.exe" />
   </Target>
 </Project>

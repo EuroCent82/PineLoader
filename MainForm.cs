@@ -35,7 +35,7 @@ sealed class MainForm : Form
         bodyFont = Brand.Body(13f);
         var iconPath = Path.Combine(root, "brand", "pine.ico");
         if (File.Exists(iconPath)) Icon = new Icon(iconPath);
-        AutoScaleMode = AutoScaleMode.None;
+        AutoScaleMode = AutoScaleMode.Font;
         FormBorderStyle = FormBorderStyle.None;
         StartPosition = FormStartPosition.CenterScreen;
         ShowInTaskbar = true;
@@ -44,7 +44,10 @@ sealed class MainForm : Form
         ForeColor = Brand.Text;
         Text = "PineLoader";
         KeyPreview = true;
-        ClientSize = new Size(780, WindowHeight());
+        var height = WindowHeight();
+        var work = Screen.PrimaryScreen?.WorkingArea ?? new Rectangle(0, 0, 780, height);
+        if (height > work.Height - 24) height = Math.Max(480, work.Height - 24);
+        ClientSize = new Size(Math.Min(780, Math.Max(480, work.Width - 24)), height);
         AccessibilityObject.Name = "PineLoader";
         SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint | ControlStyles.ResizeRedraw, true);
         UpdateStyles();
@@ -70,14 +73,14 @@ sealed class MainForm : Form
         Invalidate();
     }
 
-    public Task<bool> OfferStart(int found, int loaded)
+    public Task<bool> OfferStart(int found, int loaded, IReadOnlyList<string> modLines)
     {
         if (InvokeRequired)
         {
-            BeginInvoke(() => ShowStartOffer(found, loaded));
+            BeginInvoke(() => ShowStartOffer(found, loaded, modLines));
             return startChoice.Task;
         }
-        ShowStartOffer(found, loaded);
+        ShowStartOffer(found, loaded, modLines);
         return startChoice.Task;
     }
 
@@ -177,23 +180,82 @@ sealed class MainForm : Form
         base.Dispose(disposing);
     }
 
-    void ShowStartOffer(int found, int loaded)
+    void ShowStartOffer(int found, int loaded, IReadOnlyList<string> modLines)
     {
         choosing = true;
         foundCount = found;
         loadedCount = loaded;
         countsReady = true;
-        var top = LogoRect().Bottom + 16 + 34 + 22 * 3 + 16;
+        var contentTop = LogoRect().Bottom + 16 + 34 + 22 * 3 + 12;
+        var work = Screen.FromControl(this).WorkingArea;
+        var needed = contentTop + 120 + 12 + 44 + 10 + 32 + 4 + 32 + 10 + 44 + 12 + 48 + 24;
+        var height = Math.Min(Math.Max(ClientSize.Height, needed), Math.Max(520, work.Height - 16));
+        if (ClientSize.Height != height)
+        {
+            ClientSize = new Size(ClientSize.Width, height);
+            ApplyShape();
+        }
+        var startTop = ClientSize.Height - 24 - 48;
+        var restoreTop = startTop - 12 - 44;
+        var debugTop = restoreTop - 10 - 32;
+        var autoTop = debugTop - 4 - 32;
+        var logsTop = autoTop - 10 - 44;
+        var listHeight = Math.Max(36, logsTop - 12 - contentTop);
         var width = (ClientSize.Width - 56 - 12) / 2;
-        var logs = Brand.Button("PineLoader-Log", new Rectangle(28, top, width, 44), primary: false);
-        var errors = Brand.Button("Fehler-Log", new Rectangle(40 + width, top, width, 44), primary: false);
-        var start = Brand.Button("Spiel starten", new Rectangle(28, top + 56, ClientSize.Width - 56, 48), primary: true);
+        var list = new ListBox
+        {
+            Bounds = new Rectangle(28, contentTop, ClientSize.Width - 56, listHeight),
+            IntegralHeight = false,
+            BorderStyle = BorderStyle.FixedSingle,
+            BackColor = Brand.Ink,
+            ForeColor = Brand.Text,
+            Font = Brand.Body(13f),
+            TabIndex = 0,
+            AccessibleName = "Mod-Ordner"
+        };
+        foreach (var line in modLines) list.Items.Add(line);
+        var logs = Brand.Button("PineLoader-Log", new Rectangle(28, logsTop, width, 44), primary: false);
+        var errors = Brand.Button("Fehler-Log", new Rectangle(40 + width, logsTop, width, 44), primary: false);
+        var autostart = new CheckBox
+        {
+            Text = "Ab der Anmeldung auf eine neue Spieldatei achten",
+            Bounds = new Rectangle(28, autoTop, ClientSize.Width - 56, 32),
+            ForeColor = Brand.Text,
+            BackColor = Brand.Ink,
+            Font = Brand.Body(13f),
+            FlatStyle = FlatStyle.Flat,
+            Checked = ModHost.AutostartOn(root),
+            TabIndex = 3,
+            AccessibleName = "Ab der Anmeldung auf eine neue Spieldatei achten"
+        };
+        autostart.CheckedChanged += (_, _) =>
+        {
+            ModHost.SaveAutostart(root, autostart.Checked);
+            new ModHost(root).RememberStartup();
+        };
+        var debug = new CheckBox
+        {
+            Text = "Debug-Fenster beim Spielstart",
+            Bounds = new Rectangle(28, debugTop, ClientSize.Width - 56, 32),
+            ForeColor = Brand.Text,
+            BackColor = Brand.Ink,
+            Font = Brand.Body(13f),
+            FlatStyle = FlatStyle.Flat,
+            Checked = DebugForm.OpenAtStart(root),
+            TabIndex = 4,
+            AccessibleName = "Debug-Fenster beim Spielstart"
+        };
+        debug.CheckedChanged += (_, _) => DebugForm.Save(root, debug.Checked);
+        var restore = Brand.Button("Spiel wiederherstellen", new Rectangle(28, restoreTop, ClientSize.Width - 56, 44), primary: false);
+        restore.TabIndex = 5;
+        restore.Click += (_, _) => ConfirmRestore();
+        var start = Brand.Button("Spiel starten", new Rectangle(28, startTop, ClientSize.Width - 56, 48), primary: true);
         var close = Brand.Button("×", new Rectangle(ClientSize.Width - 52, 12, 36, 36), primary: false);
         close.AccessibleName = "Schließen";
-        logs.TabIndex = 0;
-        errors.TabIndex = 1;
-        start.TabIndex = 2;
-        close.TabIndex = 3;
+        logs.TabIndex = 1;
+        errors.TabIndex = 2;
+        start.TabIndex = 6;
+        close.TabIndex = 7;
         logs.Click += (_, _) => ShowLog("PineLoader-Log", Path.Combine(root, "Logs", "pineloader.txt"));
         errors.Click += (_, _) => ShowLog("Fehler-Log", Path.Combine(root, "Logs", "err.txt"));
         start.Click += (_, _) =>
@@ -203,14 +265,40 @@ sealed class MainForm : Form
         };
         close.Click += (_, _) => Close();
         AcceptButton = start;
+        Controls.Add(list);
         Controls.Add(logs);
         Controls.Add(errors);
+        Controls.Add(autostart);
+        Controls.Add(debug);
+        Controls.Add(restore);
         Controls.Add(start);
         Controls.Add(close);
         startButton = start;
         closeButton = close;
         Invalidate();
         start.Focus();
+    }
+
+    void ConfirmRestore()
+    {
+        var host = new ModHost(root);
+        var name = host.ShippingFileName();
+        var answer = MessageBox.Show(
+            this,
+            name + " wird wieder die originale Spieldatei. PineLoader startet danach nicht mehr vor dem Spiel.",
+            "Spiel wiederherstellen",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning,
+            MessageBoxDefaultButton.Button2);
+        if (answer != DialogResult.Yes) return;
+        try
+        {
+            host.RestoreGame();
+        }
+        catch (Exception error)
+        {
+            MessageBox.Show(this, error.Message, "Spiel wiederherstellen", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     void ShowLog(string title, string path)
@@ -240,7 +328,7 @@ sealed class MainForm : Form
         var width = 780 - 56;
         var logoHeight = logo == null ? 80 : Math.Max(1, width * logo.Height / logo.Width);
         if (!direct) return 48 + logoHeight + 16 + 64 + 24;
-        return 48 + logoHeight + 16 + 34 + 22 * 3 + 16 + 44 + 12 + 48 + 24;
+        return 48 + logoHeight + 16 + 34 + 22 * 3 + 12 + 120 + 12 + 44 + 10 + 32 + 4 + 32 + 10 + 44 + 12 + 48 + 24;
     }
 
     void ApplyShape()

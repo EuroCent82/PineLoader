@@ -33,7 +33,7 @@
   <img alt="Platform Windows" src="https://img.shields.io/badge/platform-Windows-245C48?style=flat-square">
 </p>
 
-PineLoader is not BepInEx and it is not MelonLoader. The game file stays named `*-Win64-Game.exe`. When Steam puts a new official build on the Shipping name, PineLoader saves that build there and puts itself back in front. Pionero Capital is the example game in this guide. The same steps apply to any other Windows game whose shipping file carries `++UE5+Release-5.8`.
+PineLoader is not BepInEx and it is not MelonLoader. The game file stays named `*-Win64-Game.exe`. When Steam puts a new official build on the Shipping name, PineLoader saves that build there and puts itself back in front. Pionero Capital is the supported game of this copy. The loader looks for a Windows shipping file whose version contains `++UE5+Release-5.8`. A second game is not part of this copy.
 
 ## Install
 
@@ -154,12 +154,13 @@ public sealed class ErsteMod : IPineMod
 `Load` is the only method the loader calls. Once, in the loader process, before Pionero Capital starts. `host` is that running loader.
 
 ```csharp
-public void Load(IPineHost host)
+public ModLoad Load(IPineHost host)
 {
     // One line in Logs/pineloader.txt.
     host.Log("ErsteMod ist geladen.");
     // Call this only once the game process exists.
     host.WhileGameRunning(game => host.Log("Pionero läuft. Prozess " + game.Id));
+    return ModLoad.Loaded;
 }
 ```
 
@@ -177,12 +178,13 @@ namespace ErsteMod;
 public sealed class ErsteMod : IPineMod
 {
     // Once, before Pionero Capital starts.
-    public void Load(IPineHost host)
+    public ModLoad Load(IPineHost host)
     {
         // One line in Logs/pineloader.txt.
         host.Log("ErsteMod ist geladen.");
         // Call this only once the game process exists.
         host.WhileGameRunning(game => host.Log("Pionero läuft. Prozess " + game.Id));
+        return ModLoad.Loaded;
     }
 }
 ```
@@ -252,29 +254,44 @@ Without file 3 and file 4 the note writes two lines to `pineloader.txt`. With th
 
 ## API
 
-The whole public surface lives in `IPineHost.cs`. Two interfaces, no attributes, no further class. The example game is Pionero Capital.
+The whole public surface lives in `IPineHost.cs`. Two interfaces, the `ModLoad` enum, no attributes, no further class. Pionero Capital is the supported game of this copy.
+
+On startup the loader writes this exact line to `Logs/pineloader.txt`: `Unterstütztes Spiel: Pionero Capital.`
+
+### ModLoad
+
+`Load` returns one of three values.
+
+| Value | Meaning | What the loader reports |
+| --- | --- | --- |
+| `Loaded` | The mod is in the loaded list. | `Geladen: <folder> <version>` |
+| `Off` | The same quiet skip as `Enabled=false`. | `Deaktiviert: <folder>`. Not an error, not in `err.txt`. |
+| `Failed` | The mod refused to load. | `<folder>: Laden ist fehlgeschlagen.` in the error list and in `err.txt`. The mod is not loaded. |
+
+`Enabled=false` still skips the mod before `Load` is called. That skip is `Off`, not an error. An exception from `Load` is still an error: `<folder>: ` plus the exception message, in the error list and in `err.txt`.
 
 ### IPineMod
 
-The interface of a mod. The loader looks for one public class that implements it, with a public constructor that has no parameters. There is exactly one method.
+The loader looks for one public class that implements it, with a public constructor that has no parameters. There is exactly one method.
 
 ```csharp
-// The loader takes the first matching class.
+public enum ModLoad { Loaded, Off, Failed }
+
 public interface IPineMod
 {
-    void Load(IPineHost host);
+    ModLoad Load(IPineHost host);
 }
 ```
 
 ### Load
 
-Called once, in the loader process, before Pionero Capital starts. `host` is the running loader. If `Load` throws, only this mod is skipped. The game still starts.
+Called once, in the loader process, before Pionero Capital starts. `host` is the running loader. The call has 15 seconds. After that the report says `<folder>: Laden dauert länger als 15 Sekunden.` and the mod is not loaded. The thread is not aborted. Later calls from that load to `Log`, `Error`, `UseJavaAgent`, `WhileGameRunning`, `WhenGameExits`, and `Setting` do nothing and do not change the loader.
 
 ```csharp
-public void Load(IPineHost host)
+public ModLoad Load(IPineHost host)
 {
-    // host is PineLoader, not the game.
     host.Log("Load was called.");
+    return ModLoad.Loaded;
 }
 ```
 
@@ -287,15 +304,16 @@ What the mod is allowed to use from the loader. No method here runs inside Unrea
 The folder that contains `PineLoader.exe`. For Pionero Capital that is the `PineLoader` folder next to the game. `Mods`, `Config`, `Cache`, and `Logs` live in it.
 
 ```csharp
-public void Load(IPineHost host)
+public ModLoad Load(IPineHost host)
 {
     host.Log(host.Root);
+    return ModLoad.Loaded;
 }
 ```
 
 ### Log
 
-Writes one line to `Logs/pineloader.txt`, with the time. A note can work with this alone, without Java. The same line is shown in the PineLoader log window.
+Writes one line to `Logs/pineloader.txt`, with the time. A note can work with this alone, without Java. The same line is shown in the PineLoader log window. `Log` does not by itself mark the mod as failed.
 
 ```csharp
 host.Log("A note from the mod.");
@@ -303,23 +321,53 @@ host.Log("A note from the mod.");
 
 ### Error
 
-Writes one line to `Logs/err.txt`. That alone does not mark the mod as failed. The mod fails only when `Load` throws, or when the DLL cannot be loaded.
+Writes one line to `Logs/err.txt`. That alone does not mark the mod as failed. The mod fails when `Load` throws, when it returns `Failed`, when the DLL cannot be loaded, or when a permission check below throws.
 
 ```csharp
 host.Error("A note. The mod keeps running.");
 ```
 
+### Setting
+
+`Setting(key)` reads `Config/<Folder>.ini` of the mod that is inside `Load`. The folder name is the mod folder, not a path the mod chooses. Outside `Load`, including from `WhileGameRunning` and `WhenGameExits`, it returns null. A missing key also returns null. Neither case is an error.
+
+```csharp
+var port = host.Setting("Port");
+```
+
+### Allow
+
+If `Config/<Folder>.ini` has no `Allow` line, `UseJavaAgent` and `WhileGameRunning` are allowed. The first such call writes one line: `Erlaubniszeile fehlt, volle Rechte.`
+
+If the line is present, it is a comma-separated list of `Log`, `JavaAgent`, and `Process`. `Allowed(right)` answers whether this mod has that right. `UseJavaAgent` requires `JavaAgent`. Without it the method throws `InvalidOperationException` with `Der Java-Agent ist nicht erlaubt.` and the mod is skipped into the error list and `err.txt`. `WhileGameRunning` requires `Process`. Without it the message is `Der Spielprozess ist nicht erlaubt.` and the mod is skipped the same way.
+
+```ini
+[Mod]
+Enabled=true
+Allow=Log
+```
+
+`Allow=Log` alone rejects `UseJavaAgent`. Do not add an `Allow` line unless that mod should be limited. A missing line is full rights, with the one log sentence above.
+
 ### WhileGameRunning
 
-Stores a function. The loader calls it after it has started the game process. `game` is that process, and `game.Id` is its number. For Pionero Capital that process is `Game.exe`. The function runs in the loader.
+Stores a function. The loader calls it after it has started the game process. `game` is that process, and `game.Id` is its number. For Pionero Capital that process is `Game.exe`. The function runs in the loader. Without the `Process` right, when `Allow` is present, this call fails as described under Allow.
 
 ```csharp
 host.WhileGameRunning(game => host.Log("Pionero läuft. Prozess " + game.Id));
 ```
 
+### WhenGameExits
+
+Stores a function. The loader calls it after the game process has exited, before it waits on the debug window. One function that throws is written to `err.txt`. The next function still runs. The throw does not mark the mod as failed, because `Load` has already returned.
+
+```csharp
+host.WhenGameExits(() => host.Log("Das Spiel ist zu."));
+```
+
 ### UseJavaAgent
 
-Registers a JAR as a Java agent. `jarPath` has to point at a file that exists, or the method throws and this mod is skipped. `arguments` is the text Java passes to `premain`. The loader puts the agent into `JAVA_TOOL_OPTIONS` of the process it starts itself.
+Registers a JAR as a Java agent. `jarPath` has to point at a file under `Mods`, or the method throws and this mod is skipped. `arguments` is the text Java passes to `premain`. An argument with whitespace, or one that contains ` -`, throws and the mod is skipped. The loader puts the agent into `JAVA_TOOL_OPTIONS` of the process it starts itself. Without the `JavaAgent` right, when `Allow` is present, the failure is the permission error under Allow, not a missing file.
 
 Pionero Capital starts its Java server later, on its own. This method alone does not put the agent into that server. The C# note still works with or without the call.
 
@@ -327,11 +375,43 @@ Pionero Capital starts its Java server later, on its own. This method alone does
 host.UseJavaAgent(jarPath, logPath);
 ```
 
+### Hash
+
+Optional line in `Config/<Folder>.ini`. If `Hash` is missing, the mod loads and the window says `unsigniert`. If it is present, it is the SHA-256 of the mod DLL. A mismatch throws `Der Hash stimmt nicht.` That text is the error for this mod. The mod is not loaded.
+
+```ini
+Hash=0123456789ABCDEF
+```
+
+### After
+
+Optional line in `Config/<Folder>.ini`. `After=Zebra` loads this mod after the mod folder `Zebra`, when both are enabled. One predecessor, not a list. A cycle is still loaded, in alphabetical order, and the error list says `Ladereihenfolge: Zyklus zwischen <names>. Es bleibt beim Alphabet.` The loader does not hang.
+
+```ini
+After=Zebra
+```
+
+### Engine.txt
+
+Optional file next to `PineLoader.exe`, one accepted version line per row. Lines that are empty or start with `#` or `;` are ignored. If the file is missing, the only accepted line is `++UE5+Release-5.8`. A shipping file whose version contains none of those lines is left where it is. The log says that no Unreal Engine 5.8 game was found, and the startup fails with that fact instead of moving the file.
+
 ### What is not there
 
 No attributes on the class, no `OnUpdate` method, and no access to Unreal objects. The loader does not patch game methods, and it does not load BepInEx plugins or MelonLoader mods. Anything that has to happen inside the game is built in the mod.
 
+The loader starts the game and loads mods. Glovebox, Pause, Bills, Warehouse, and Mod Manager change the game, the server, or the pak. `PineJava.exe` only reads `Cache/java-agent.arg`. It does not know mod names. The loader decides which lines are in that file.
+
 ## Changelog
+
+### 1.0.4
+
+2026-11-17
+
+- The log names Pionero Capital as the supported game of this copy.
+- `Load` returns loaded, off, or failed. During `Load`, `Setting` reads that mod's ini.
+- `Allow` can limit `Log`, `JavaAgent`, and `Process`. Without that line the call stays allowed, and the log says once that the permission line is missing.
+- After 15 seconds a late call from that load no longer changes the loader.
+- Restore finds `java-game.exe` by a path that ends in `jre\bin`, without a fixed game-folder name.
 
 ### 1.0.3
 
@@ -339,6 +419,10 @@ No attributes on the class, no `OnUpdate` method, and no access to Unreal object
 
 - The release zip includes `shim/PineJava.exe` next to `PineLoader.exe`. Without that file, a mod that talks to the game server is skipped.
 - PineLoader exits when the game exits. The quiet process no longer stays behind after the game has closed.
+- Sign-in autostart is off until it is switched on in the window. When it is on, PineLoader checks the game file after Windows sign-in and exits once there is nothing left to do.
+- A DLL with no mod class is an error, not a loaded mod.
+- A quick start still loads the mods and skips the short pause. The report is the one just loaded.
+- Restore game puts the original game file back on the Shipping name.
 
 ### 1.0.2
 

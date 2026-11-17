@@ -1,0 +1,22 @@
+PineLoader 1.0.4
+2026-11-17
+
+The log names Pionero Capital as the supported game of this copy.
+Load returns loaded, off, or failed. During Load, Setting reads that mod's ini.
+Allow can limit Log, JavaAgent, and Process. Without that line the call stays allowed, and the log says once that the permission line is missing.
+After 15 seconds a late call from that load no longer changes the loader.
+Restore finds java-game.exe by a path that ends in jre\bin, without a fixed game-folder name.
+
+The zip is PineLoader-1.0.4-win-x64.zip.
+It contains PineLoader.exe and shim\PineJava.exe.
+PineJava reads only Cache\java-agent.arg and does not know mod names.
+
+1.0.3
+2026-11-15
+
+The release zip includes shim\PineJava.exe next to PineLoader.exe.
+PineLoader exits when the game exits.
+Sign-in autostart is off until it is switched on.
+A DLL with no mod class is an error.
+A quick start still loads the mods. The report is the one just loaded.
+Restore game puts the original game file back on the Shipping name.

@@ -46,7 +46,7 @@ static class Program
     {
         var host = new ModHost(ModHost.FindRoot());
         window.ShowStep("PineLoader", "Ordner werden geprüft");
-        var report = host.Run();
+        var report = await Task.Run(() => host.Run());
         if (report.FirstRun)
         {
             window.ShowStep("Einrichtung", LaunchedDirectly() ? "Ordner stehen." : "Ordner stehen. Danach startet das Spiel.");
@@ -70,7 +70,7 @@ static class Program
         {
             host.Log("PineLoader bleibt offen, bis Spiel starten gewählt wird.");
             var found = CountMods(host.Root);
-            if (!await window.OfferStart(found, report.Loaded.Count)) return 0;
+            if (!await window.OfferStart(found, report.Loaded.Count, host.ModLines(report))) return 0;
             host.Log("Spiel starten gewählt.");
         }
 
@@ -84,11 +84,27 @@ static class Program
             UseShellExecute = false
         };
         foreach (var arg in gameArgs) start.ArgumentList.Add(arg);
+        host.BeginSessionTrace(report);
         host.PrepareGame(start);
+        DebugForm? debug = null;
+        if (DebugForm.OpenAtStart(host.Root))
+        {
+            debug = new DebugForm(host.Root);
+            debug.Show();
+        }
         var game = System.Diagnostics.Process.Start(start) ?? throw new InvalidOperationException("Das Spiel konnte nicht gestartet werden.");
         host.GameStarted(game);
         await game.WaitForExitAsync();
         host.Log("Spiel beendet, Code " + game.ExitCode);
+        host.GameExited();
+        if (debug != null && !debug.IsDisposed)
+        {
+            host.Log("Debug-Fenster bleibt offen.");
+            var closed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            debug.FormClosed += (_, _) => closed.TrySetResult();
+            if (debug.IsDisposed) closed.TrySetResult();
+            await closed.Task;
+        }
         return game.ExitCode;
     }
 
