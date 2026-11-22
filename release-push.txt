@@ -11,3 +11,13 @@
 [2026-11-22 22:01:34] Aktueller Remote-Tag für Backup: v1.0.4
 [2026-11-22 22:01:34] Backup für v1.0.4 bereits vorhanden unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.0.4
 [2026-11-22 22:01:34] Neuer Release-Tag: v1.1.0-alpha
+[2026-11-22 22:01:34] Commit für v1.1.0-alpha erstellt.
+[2026-11-22 22:01:38] Tag v1.1.0-alpha erstellt und zu origin gepusht.
+[2026-11-22 22:01:38] ?? Release für v1.1.0-alpha evtl. bereits vorhanden – fahre fort.
+[2026-11-22 22:01:38] ERROR: ? Fehler: GitHub-CLI-Befehl fehlgeschlagen: gh release upload v1.1.0-alpha  --clobber
+[2026-11-22 22:04:14] ?? Hole neueste Referenz von origin/master …
+[2026-11-22 22:04:15] ?? Erstelle ZIP-Backup vom Remote-Ref origin/master …
+[2026-11-22 22:04:15] ? Remote-Backup erfolgreich unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.1.0-alpha\PineLoader-RemoteBackup-20261122.zip
+[2026-11-22 22:04:15] Aktueller Remote-Tag für Backup: v1.1.0-alpha
+[2026-11-22 22:04:15] Backup für v1.1.0-alpha bereits vorhanden unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.1.0-alpha
+[2026-11-22 22:04:15] Neuer Release-Tag: v1.1.0-alpha
