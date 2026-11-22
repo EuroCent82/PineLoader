@@ -1,0 +1,13 @@
+[2026-11-22 21:54:54] ?? Hole neueste Referenz von origin/master …
+[2026-11-22 21:54:55] ?? Erstelle ZIP-Backup vom Remote-Ref origin/master …
+[2026-11-22 21:54:55] ? Remote-Backup erfolgreich unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.0.4\PineLoader-RemoteBackup-20261122.zip
+[2026-11-22 21:54:56] Aktueller Remote-Tag für Backup: v1.0.4
+[2026-11-22 21:54:56] Backup für v1.0.4 bereits vorhanden unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.0.4
+[2026-11-22 21:54:56] Neuer Release-Tag: v1.1.0-alpha
+[2026-11-22 21:54:56] ERROR: ? Fehler: Arbeitsbaum ist nicht sauber – bitte committen oder stashen.
+[2026-11-22 22:01:33] ?? Hole neueste Referenz von origin/master …
+[2026-11-22 22:01:34] ?? Erstelle ZIP-Backup vom Remote-Ref origin/master …
+[2026-11-22 22:01:34] ? Remote-Backup erfolgreich unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.0.4\PineLoader-RemoteBackup-20261122.zip
+[2026-11-22 22:01:34] Aktueller Remote-Tag für Backup: v1.0.4
+[2026-11-22 22:01:34] Backup für v1.0.4 bereits vorhanden unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.0.4
+[2026-11-22 22:01:34] Neuer Release-Tag: v1.1.0-alpha
