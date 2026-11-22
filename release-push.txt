@@ -21,3 +21,12 @@
 [2026-11-22 22:04:15] Aktueller Remote-Tag für Backup: v1.1.0-alpha
 [2026-11-22 22:04:15] Backup für v1.1.0-alpha bereits vorhanden unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.1.0-alpha
 [2026-11-22 22:04:15] Neuer Release-Tag: v1.1.0-alpha
+[2026-11-22 22:04:16] Commit für v1.1.0-alpha erstellt.
+[2026-11-22 22:04:16] ERROR: ? Fehler: Git-Befehl fehlgeschlagen: git tag v1.1.0-alpha
+[2026-11-22 22:09:17] ERROR: ? Fehler: Git-Befehl fehlgeschlagen: git fetch --tags
+[2026-11-22 22:09:52] ?? Hole neueste Referenz von origin/master …
+[2026-11-22 22:09:52] ?? Erstelle ZIP-Backup vom Remote-Ref origin/master …
+[2026-11-22 22:09:52] ? Remote-Backup erfolgreich unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.1.0-alpha\PineLoader-RemoteBackup-20261122.zip
+[2026-11-22 22:09:53] Aktueller Remote-Tag für Backup: v1.1.0-alpha
+[2026-11-22 22:09:53] Backup für v1.1.0-alpha bereits vorhanden unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.1.0-alpha
+[2026-11-22 22:09:53] Neuer Release-Tag: v1.1.0-alpha
