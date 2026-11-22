@@ -1,19 +1,6 @@
-# Visual Studio and MSBuild
 bin/
 obj/
-.vs/
 *.user
-*.suo
-
-# This machine's game path. It is written next to PineLoader.exe.
-config.json
-
-# Java class files from any local build
 *.class
-
-# Glovebox, its agent, and the Java shim stay on this machine.
-# examples/ remains part of the repository.
+out/
 src/
-
-# Editor metadata. Not part of the PineLoader repository.
-.cursor/

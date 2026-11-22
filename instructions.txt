@@ -1,0 +1,15 @@
+PineLoader 1.1.0-alpha
+Community Alpha prerelease for Pionero Capital on Windows.
+
+Install
+
+1. Close Pionero Capital.
+2. Download PineLoader-1.1.0-alpha-win-x64.zip, or PineLoader-Setup-1.1.0-alpha.exe, from:
+   https://github.com/EuroCent82/PineLoader/releases/tag/v1.1.0-alpha
+3. With the zip, extract the PineLoader folder beside the game. With the installer, follow its prompts.
+4. Start PineLoader.exe once and complete setup.
+5. Leave Steam launch options empty. Start the game from Steam.
+
+Mods
+
+Install mods separately into PineLoader\Mods. Follow each mod's instructions. The loader creates Config, Cache, and Logs as needed. Back up saves before using community mods.

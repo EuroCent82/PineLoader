@@ -1,39 +1,12 @@
-[b]PineLoader 1.0.4[/b]
-## Deutsch
-Das Log nennt [b]Pionero Capital[/b] als unterstütztes Spiel dieser Fassung.
-[code]Load[/code] gibt geladen, aus oder fehlgeschlagen zurück.
-Während [code]Load[/code] liest [code]Setting[/code] die INI dieser Mod.
-[code]Allow[/code] kann [code]Log[/code], [code]JavaAgent[/code] und [code]Process[/code] begrenzen.
-Ohne diese Zeile bleibt der Aufruf erlaubt, und das Log sagt einmal, dass die Erlaubniszeile fehlt.
-Nach 15 Sekunden ändert ein später Aufruf dieses Ladens den Loader nicht mehr.
-[b]Spiel wiederherstellen[/b] findet [code]java-game.exe[/code] über einen Pfad, der auf [code]jre\bin[/code] endet, ohne einen festen Spielordner.
-Die Datei ist [code]PineLoader-1.0.4-win-x64.zip[/code].
-Darin liegen [code]PineLoader.exe[/code] und [code]shim\PineJava.exe[/code].
-[code]PineJava[/code] liest nur [code]Cache\java-agent.arg[/code] und kennt keine Mod-Namen.
-## English
-The log names [b]Pionero Capital[/b] as the supported game of this copy.
-[code]Load[/code] returns loaded, off, or failed.
-During [code]Load[/code], [code]Setting[/code] reads that mod's ini.
-[code]Allow[/code] can limit [code]Log[/code], [code]JavaAgent[/code], and [code]Process[/code].
-Without that line the call stays allowed, and the log says once that the permission line is missing.
-After 15 seconds a late call from that load no longer changes the loader.
-[b]Restore[/b] finds [code]java-game.exe[/code] by a path that ends in [code]jre\bin[/code], without a fixed game-folder name.
-The zip is [code]PineLoader-1.0.4-win-x64.zip[/code].
-It contains [code]PineLoader.exe[/code] and [code]shim\PineJava.exe[/code].
-[code]PineJava[/code] reads only [code]Cache\java-agent.arg[/code] and does not know mod names.
+[b]PineLoader 1.1.0-alpha[/b]
+[b]Alpha-Vorabversion[/b]: neue Installations- und Einrichtungsoberfläche, Mod-Katalog, Installation aus ZIP-Dateien, Diagnoseberichte, sicherer Modus und Fortschritts-/Statusanzeigen.
+Die Mod-Berechtigungen sind standardmäßig eingeschränkt; neue Konfigurationen starten deaktiviert und erlauben zunächst nur Logs.
+Das Paket enthält PineLoader und [code]shim\PineJava.exe[/code], aber keine Mods.
 
-[b]1.0.3[/b]
-## Deutsch
-Das Zip enthält [code]shim\PineJava.exe[/code] neben [code]PineLoader.exe[/code].
-[b]PineLoader[/b] endet mit dem Spiel.
-Der Automatikstart nach der Anmeldung ist aus, bis er eingeschaltet wird.
-Eine DLL ohne Mod-Klasse ist ein Fehler.
-Ein Schnellstart lädt die Mods weiter. Der Bericht ist der gerade geladene Stand.
-[b]Spiel wiederherstellen[/b] legt die originale Spieldatei auf den Shipping-Namen zurück.
-## English
-The zip includes [code]shim\PineJava.exe[/code] next to [code]PineLoader.exe[/code].
-[b]PineLoader[/b] exits when the game exits.
-Sign-in autostart is off until it is switched on.
-A DLL with no mod class is an error.
-A quick start still loads the mods. The report is the one just loaded.
-[b]Restore game[/b] puts the original game file back on the Shipping name.
+[b]PineLoader 1.1.0-alpha[/b]
+[b]Alpha prerelease[/b]: new setup interface, mod catalog, ZIP installation, diagnostic reports, safe mode, and progress/status views.
+Mod permissions are restricted by default; new configurations start disabled and initially allow logging only.
+The package includes PineLoader and [code]shim\PineJava.exe[/code], but no mods.
+
+[b]1.0.4[/b]
+Das Log nennt Pionero Capital als unterstütztes Spiel. Mod-Aufrufe erhalten Statusrückgaben; Einstellungen werden während des Ladens gelesen. Wiederherstellung findet die Spiel-Java-Datei ohne festen Spielpfad.

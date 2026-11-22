@@ -1,0 +1,16 @@
+Developer note - Unofficial community software
+
+PineLoader is an independent community project. It is not reviewed or supported by the game studio. Use community software at your own risk and back up saves before installing mods.
+
+PineLoader 1.1.0-alpha is a prerelease for testing. It starts Pionero Capital before loading compatible mods. It does not include mods.
+
+Download:
+https://github.com/EuroCent82/PineLoader/releases/tag/v1.1.0-alpha
+Guide:
+https://pineloader.dev/docs/
+Repository:
+https://github.com/EuroCent82/PineLoader
+Issues:
+https://github.com/EuroCent82/PineLoader/issues
+
+EuroCent
