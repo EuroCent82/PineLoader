@@ -30,3 +30,9 @@
 [2026-11-22 22:09:53] Aktueller Remote-Tag für Backup: v1.1.0-alpha
 [2026-11-22 22:09:53] Backup für v1.1.0-alpha bereits vorhanden unter D:\Projekte\Meine Projekte\Games\PineLoader\BACKUP\PINELOADER\GITHUB\v1.1.0-alpha
 [2026-11-22 22:09:53] Neuer Release-Tag: v1.1.0-alpha
+[2026-11-22 22:09:53] Commit für v1.1.0-alpha erstellt.
+[2026-11-22 22:09:53] Tag v1.1.0-alpha existiert, verweist aber auf anderen Commit – lösche und erstelle neu.
+[2026-11-22 22:09:55] Tag v1.1.0-alpha neu erstellt.
+[2026-11-22 22:09:59] Tag v1.1.0-alpha (ggf. bereits) zu origin gepusht.
+[2026-11-22 22:10:00] GitHub-Release v1.1.0-alpha erstellt.
+[2026-11-22 22:10:00] ERROR: ? Fehler: Das Argument kann nicht an den Parameter "Path" gebunden werden, da es NULL ist.
